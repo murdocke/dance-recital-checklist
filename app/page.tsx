@@ -36,6 +36,8 @@ function sanitizeFilename(value: string) {
 }
 
 export default function HomePage() {
+  const feedbackFormUrl =
+    "https://docs.google.com/forms/d/e/1FAIpQLSci-9ibEimHqm5naAzeDbVeSmDbM1BvGg79bRWnjxLPb9VvUQ/viewform?usp=publish-editor";
   const [studioName, setStudioName] = useState("");
   const [studentCount, setStudentCount] = useState("12");
   const [routineCount, setRoutineCount] = useState("3");
@@ -461,6 +463,25 @@ export default function HomePage() {
           <p>Your printable checklist will appear here after you generate it.</p>
         </section>
       )}
+
+      <section className="feedback-card no-print">
+        <div>
+          <p className="sheet-label">Feedback</p>
+          <h2>Have an idea for this tool?</h2>
+          <p className="feedback-copy">
+            Send your suggestion through the feedback form. That gives users a direct way to ask
+            for features or improvements.
+          </p>
+        </div>
+        <a
+          className="feedback-link"
+          href={feedbackFormUrl}
+          target="_blank"
+          rel="noreferrer"
+        >
+          Share an Idea
+        </a>
+      </section>
     </main>
   );
 }

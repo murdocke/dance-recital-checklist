@@ -146,6 +146,48 @@ button:disabled {
   overflow: hidden;
 }
 
+.feedback-card {
+  max-width: 1180px;
+  margin: 24px auto 0;
+  padding: 24px 28px;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  background: linear-gradient(135deg, #fff8ee 0%, #f2e3d4 100%);
+  border: 1px solid rgba(112, 88, 60, 0.14);
+  border-radius: 32px;
+  box-shadow: var(--shadow);
+}
+
+.feedback-copy {
+  max-width: 42rem;
+  margin-bottom: 0;
+  color: var(--muted);
+}
+
+.feedback-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 180px;
+  padding: 14px 20px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fffaf4;
+  text-decoration: none;
+}
+
+.feedback-link:hover,
+.feedback-link:focus-visible {
+  background: var(--accent-dark);
+}
+
+.feedback-link:focus-visible {
+  outline: 2px solid rgba(200, 91, 60, 0.2);
+  outline-offset: 3px;
+}
+
 .checklist-sheet {
   padding: 28px 28px 32px;
 }
@@ -302,6 +344,12 @@ button:disabled {
   .checklist-sheet {
     padding: 20px;
     overflow-x: auto;
+  }
+
+  .feedback-card {
+    padding: 20px;
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .checklist-table {
