@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@vercel/blob": "latest",
     "next": "^16.2.3",
     "pdf-lib": "^1.17.1",
     "react": "19.0.0",

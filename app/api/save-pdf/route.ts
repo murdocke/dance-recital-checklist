@@ -1,6 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
-
+import { put } from "@vercel/blob";
 import { NextRequest, NextResponse } from "next/server";
 
 function sanitizeFilename(value: string) {
@@ -13,21 +11,23 @@ export async function POST(request: NextRequest) {
     const requestedFilename = request.headers.get("x-filename") ?? "recital-checklist.pdf";
     const safeFilename = sanitizeFilename(requestedFilename) || "recital-checklist.pdf";
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const outputDirectory = path.join(process.cwd(), "saved-pdfs");
-    const savedFilename = `${timestamp}-${safeFilename}`;
-    const outputPath = path.join(outputDirectory, savedFilename);
+    const filePath = `recital-checklists/${timestamp}-${safeFilename}`;
     const fileBuffer = Buffer.from(await request.arrayBuffer());
 
-    await mkdir(outputDirectory, { recursive: true });
-    await writeFile(outputPath, fileBuffer);
+    const blob = await put(filePath, fileBuffer, {
+      access: "private",
+      addRandomSuffix: false,
+      contentType: "application/pdf"
+    });
 
     return NextResponse.json({
-      filePath: outputPath
+      filePath: blob.pathname,
+      url: blob.url
     });
   } catch {
     return NextResponse.json(
       {
-        error: "Unable to save the PDF on the server."
+        error: "Unable to save the PDF to Vercel Blob."
       },
       { status: 500 }
     );
