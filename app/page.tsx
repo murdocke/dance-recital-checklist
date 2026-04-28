@@ -35,6 +35,70 @@ function sanitizeFilename(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
+async function savePdfFile(pdfBytes: Uint8Array, filename: string) {
+  const browserWindow = window as Window & {
+    showSaveFilePicker?: (options: {
+      suggestedName?: string;
+      types?: Array<{
+        description?: string;
+        accept: Record<string, string[]>;
+      }>;
+    }) => Promise<{
+      createWritable: () => Promise<{
+        write: (data: BufferSource | Blob | string) => Promise<void>;
+        close: () => Promise<void>;
+      }>;
+    }>;
+  };
+
+  if (browserWindow.showSaveFilePicker) {
+    const fileHandle = await browserWindow.showSaveFilePicker({
+      suggestedName: filename,
+      types: [
+        {
+          description: "PDF Document",
+          accept: { "application/pdf": [".pdf"] }
+        }
+      ]
+    });
+    const writable = await fileHandle.createWritable();
+    await writable.write(pdfBytes);
+    await writable.close();
+    return;
+  }
+
+  const blob = new Blob([pdfBytes], { type: "application/pdf" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  window.setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 1000);
+}
+
+async function savePdfToServer(pdfBytes: Uint8Array, filename: string) {
+  const response = await fetch("/api/save-pdf", {
+    method: "POST",
+    headers: {
+      "content-type": "application/pdf",
+      "x-filename": filename
+    },
+    body: pdfBytes
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to save PDF on the server.");
+  }
+
+  return (await response.json()) as { filePath: string };
+}
+
 export default function HomePage() {
   const feedbackFormUrl =
     "https://docs.google.com/forms/d/e/1FAIpQLSci-9ibEimHqm5naAzeDbVeSmDbM1BvGg79bRWnjxLPb9VvUQ/viewform?usp=publish-editor";
@@ -42,6 +106,7 @@ export default function HomePage() {
   const [studentCount, setStudentCount] = useState("12");
   const [routineCount, setRoutineCount] = useState("3");
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [pdfSaveMessage, setPdfSaveMessage] = useState("");
   const [checklistRows, setChecklistRows] = useState<ChecklistRow[]>([]);
   const [submitted, setSubmitted] = useState<{
     studioName: string;
@@ -97,6 +162,7 @@ export default function HomePage() {
     }
 
     setIsGeneratingPdf(true);
+    setPdfSaveMessage("");
 
     try {
       const pdfDoc = await PDFDocument.create();
@@ -298,16 +364,15 @@ export default function HomePage() {
       }
 
       const pdfBytes = await pdfDoc.save();
-      const blob = new Blob([pdfBytes], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
       const studioSlug = sanitizeFilename(submitted.studioName) || "recital";
+      const filename = `${studioSlug}-checklist.pdf`;
 
-      link.href = url;
-      link.download = `${studioSlug}-checklist.pdf`;
-      link.click();
-
-      URL.revokeObjectURL(url);
+      await savePdfToServer(pdfBytes, filename);
+      await savePdfFile(pdfBytes, filename);
+    } catch (error) {
+      setPdfSaveMessage(
+        error instanceof Error ? error.message : "Failed to save the PDF."
+      );
     } finally {
       setIsGeneratingPdf(false);
     }
@@ -373,6 +438,7 @@ export default function HomePage() {
               {isGeneratingPdf ? "Generating PDF..." : "Save as PDF"}
             </button>
           </div>
+          {pdfSaveMessage ? <p>{pdfSaveMessage}</p> : null}
         </form>
       </section>
 
